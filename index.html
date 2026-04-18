@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Quantum Harmonic Oscillator Simulation</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b0f1a;
+    color: white;
+}
+#ui {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(20,20,40,0.8);
+    padding: 10px;
+    border-radius: 10px;
+}
+canvas {
+    display: block;
+}
+label {
+    font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+<h3>Quantum Harmonic Oscillator</h3>
+
+<p style="font-size:12px;">
+ψₙ(x,t) = ψₙ(x) e^{-iEₙt/ħ},  
+Eₙ = ħω(n + 1/2)
+</p>
+
+<label>Mass m: <input id="m" type="range" min="0.5" max="5" step="0.1" value="1"></label><br>
+<label>Frequency ω: <input id="w" type="range" min="0.5" max="5" step="0.1" value="1"></label><br>
+
+<hr>
+
+<label>n=1 weight <input id="c1" type="range" min="0" max="1" step="0.01" value="1"></label><br>
+<label>n=2 weight <input id="c2" type="range" min="0" max="1" step="0.01" value="0"></label><br>
+<label>n=3 weight <input id="c3" type="range" min="0" max="1" step="0.01" value="0"></label><br>
+
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let t = 0;
+
+// Hermite polynomials (simple forms)
+function H(n, x){
+    if(n===0) return 1;
+    if(n===1) return 2*x;
+    if(n===2) return 4*x*x - 2;
+    if(n===3) return 8*x*x*x - 12*x;
+    return 1;
+}
+
+// wavefunction (unnormalized for simplicity)
+function psi(n, x, m, w){
+    const alpha = Math.sqrt(m*w);
+    const xi = alpha * x;
+    const gauss = Math.exp(-xi*xi/2);
+    return H(n, xi) * gauss;
+}
+
+function energy(n, w){
+    return w*(n + 0.5);
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    const m = parseFloat(document.getElementById("m").value);
+    const w = parseFloat(document.getElementById("w").value);
+
+    const c1 = parseFloat(document.getElementById("c1").value);
+    const c2 = parseFloat(document.getElementById("c2").value);
+    const c3 = parseFloat(document.getElementById("c3").value);
+
+    const width = canvas.width;
+    const height = canvas.height;
+
+    const scaleX = 60;
+    const scaleY = 200;
+
+    // center line
+    ctx.strokeStyle = "#444";
+    ctx.beginPath();
+    ctx.moveTo(0, height/2);
+    ctx.lineTo(width, height/2);
+    ctx.stroke();
+
+    ctx.beginPath();
+
+    for(let px=0; px<width; px++){
+        let x = (px - width/2)/scaleX;
+
+        // time evolution phases
+        let p1 = psi(0,x,m,w) * Math.cos(energy(0,w)*t);
+        let p2 = psi(1,x,m,w) * Math.cos(energy(1,w)*t);
+        let p3 = psi(2,x,m,w) * Math.cos(energy(2,w)*t);
+
+        let wave = c1*p1 + c2*p2 + c3*p3;
+
+        let y = height/2 - wave*scaleY;
+
+        if(px===0) ctx.moveTo(px,y);
+        else ctx.lineTo(px,y);
+    }
+
+    ctx.strokeStyle = "#00f0ff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // label
+    ctx.fillStyle = "white";
+    ctx.font = "14px Arial";
+    ctx.fillText("Quantum Harmonic Oscillator | Superposition n=1,2,3", 20, height-20);
+
+    t += 0.02;
+    requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+
+</body>
+</html>
